@@ -140,9 +140,11 @@ class ComfyClient:
             req.add_header(k, v)
         return urllib.request.urlopen(req, timeout=self.timeout)
 
-    def health(self) -> bool:
+    def health(self, timeout: Optional[float] = None) -> bool:
         try:
-            with self._req("/system_stats") as r:
+            url = f"{self.base_url}/system_stats"
+            req = urllib.request.Request(url)
+            with urllib.request.urlopen(req, timeout=timeout or min(self.timeout, 5)) as r:
                 return r.status == 200
         except Exception:
             return False

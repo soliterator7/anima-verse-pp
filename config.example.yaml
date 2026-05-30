@@ -1,0 +1,50 @@
+# anima-versa-pp configuration — TEMPLATE
+# Copy this file to config.yaml and edit it, then start with:  ./run.sh
+#   cp config.example.yaml config.yaml
+# config.yaml is gitignored (it holds your local URLs); this template is committed.
+#
+# On start the server scans models/ and workflows/, pings each ComfyUI url, and
+# prints what it found and which methods are READY.
+# Environment variables still override anything here (PP_*, COMFY_*, FACE_*).
+
+port: 8005
+host: 0.0.0.0
+
+# Method used when a request does not specify one: internal | comfyui | multiswap
+default_method: internal
+
+# If the chosen method is disabled / not reachable / errors, try these in order.
+# internal is the self-contained safety net (no ComfyUI needed).
+fallback: [internal]
+
+# ---- internal: local InsightFace swap + GFPGAN enhance (no ComfyUI needed) ----
+internal:
+  enabled: true
+  swap: true       # apply face swap
+  enhance: true    # apply GFPGAN enhancement after swap
+
+# ---- comfyui: ReActor single-identity swap on a ComfyUI server ----------------
+# The ComfyUI server must have the ReActor node + its models installed.
+comfyui:
+  enabled: true
+  url: ""          # e.g. http://127.0.0.1:8188   (empty = method not ready)
+
+# ---- multiswap: multi-identity swap (flux2) on a ComfyUI server ---------------
+multiswap:
+  enabled: true
+  url: ""          # e.g. http://127.0.0.1:8188   (empty = method not ready)
+  use_v2: false    # true = use the v2 workflow (face masking), false = v1
+  unet: ""         # optional: override the gguf/unet model name in the workflow
+  clip: ""         # optional: override the clip model name in the workflow
+
+# ---- enhancement tuning (internal method) ------------------------------------
+enhance:
+  blend: 1.0               # 0.0 = original, 1.0 = full enhanced
+  color_correction: true
+  sharpen: true
+  sharpen_strength: 0.5
+
+# ---- ComfyUI client behaviour ------------------------------------------------
+comfy:
+  timeout: 300             # seconds to wait for a ComfyUI job
+  free_memory_before_run: true

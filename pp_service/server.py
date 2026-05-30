@@ -22,6 +22,7 @@ Support:
 """
 import json
 import logging
+import os
 from typing import List, Optional
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
@@ -33,6 +34,68 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("pp_service")
 
 app = FastAPI(title="anima-versa-pp")
+
+
+def startup_scan(ping: bool = True) -> None:
+    """Print what the server found (config, models, workflows) and which methods
+    are READY, pinging each configured ComfyUI url. Called from main()."""
+    p = print
+    p("=" * 64)
+    p("anima-versa-pp  starting up")
+    p("=" * 64)
+
+    # config file
+    if config.CONFIG_ERROR:
+        p(f"[config]  ERROR reading {config.CONFIG_PATH}: {config.CONFIG_ERROR}")
+        p("[config]  using defaults + environment only")
+    elif config.CONFIG_LOADED:
+        p(f"[config]  loaded {config.CONFIG_PATH}")
+    else:
+        p(f"[config]  no config.yaml at {config.CONFIG_PATH} (defaults + env)")
+
+    # models
+    def _m(path):
+        if path and os.path.exists(path):
+            return f"OK  {path}  ({os.path.getsize(path) // (1024*1024)} MB)"
+        return f"MISSING  ({path or 'unset'})"
+    p(f"[models]  dir: {config.MODELS_DIR}")
+    p(f"[models]  swap   : {_m(config.SWAP_MODEL)}")
+    p(f"[models]  enhance: {_m(config.ENHANCE_MODEL)}")
+
+    # workflows
+    def _w(path):
+        return "OK" if path and os.path.exists(path) else "MISSING"
+    p(f"[workflows] dir: {config.WORKFLOWS_DIR}")
+    p(f"[workflows] faceswap (reactor): {_w(config.COMFY_FACESWAP_WORKFLOW)}")
+    p(f"[workflows] multiswap v1      : {_w(config.COMFY_MULTISWAP_WORKFLOW)}")
+    p(f"[workflows] multiswap v2      : {_w(config.COMFY_MULTISWAP_WORKFLOW_V2)}")
+
+    # methods
+    p(f"[default] method: {config.DEFAULT_METHOD}   fallback: {config.FALLBACK_CHAIN}")
+    for m in config.VALID_METHODS:
+        enabled = config.method_enabled(m)
+        if not enabled:
+            p(f"[method] {m:9}: DISABLED")
+            continue
+        if m == "internal":
+            ok = config.SWAP_MODEL is not None
+            p(f"[method] {m:9}: {'READY' if ok else 'NOT READY (no swap model)'}")
+            continue
+        url = config.comfy_url(m)
+        if not url:
+            p(f"[method] {m:9}: enabled, but no url set -> NOT READY")
+            continue
+        slots = engine_comfy.slot_count(m)
+        if ping:
+            reach = engine_comfy.reachable(m)
+            tag = "REACHABLE" if reach else "NOT REACHABLE"
+            p(f"[method] {m:9}: url {url}  ({slots} ref slots)  ping -> {tag}")
+        else:
+            p(f"[method] {m:9}: url {url}  ({slots} ref slots)")
+
+    p("=" * 64)
+    p(f"serving on http://{config.HOST}:{config.PORT}")
+    p("=" * 64)
 
 
 @app.get("/health")
@@ -51,10 +114,14 @@ async def health():
         "methods": {
             "internal": method_info("internal"),
             "comfyui": {**method_info("comfyui"),
+                        "url": config.COMFY_FACESWAP_URL,
                         "url_set": bool(config.COMFY_FACESWAP_URL),
+                        "reachable": engine_comfy.reachable("comfyui"),
                         "ref_slots": engine_comfy.slot_count("comfyui")},
             "multiswap": {**method_info("multiswap"),
+                          "url": config.COMFY_MULTISWAP_URL,
                           "url_set": bool(config.COMFY_MULTISWAP_URL),
+                          "reachable": engine_comfy.reachable("multiswap"),
                           "ref_slots": engine_comfy.slot_count("multiswap")},
         },
         "swapper_loaded": engine_swap.is_loaded(),
@@ -129,7 +196,8 @@ async def enhance(image: UploadFile = File(...)):
 
 def main():
     import uvicorn
-    uvicorn.run(app, host=config.HOST, port=config.PORT)
+    startup_scan(ping=True)
+    uvicorn.run(app, host=config.HOST, port=config.PORT, log_level="warning")
 
 
 if __name__ == "__main__":

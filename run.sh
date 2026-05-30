@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # Launch the standalone post-processing service.
 #
-# Required model setup (large ONNX files live OUTSIDE this repo):
-#   FACE_SERVICE_MODELS_DIR   dir containing buffalo_l/ + the swap model
-#   FACE_SERVICE_MODEL_PATH   path to inswapper_128.onnx or reswapper_256.onnx
-#   FACE_ENHANCE_MODEL_PATH   (optional) GFPGAN/CodeFormer/GPEN ONNX
+# Configuration lives in config.yaml (edit that, then run this).
+# On start the server scans models/ and workflows/, pings each ComfyUI url,
+# and prints what it found and which methods are READY.
 #
-# Service settings:
-#   PP_PORT (default 8005), PP_HOST (default 0.0.0.0)
+# Models auto-resolve from ./models (reswapper_256.onnx, GFPGANv1.4.onnx);
+# no environment variables are required. Env vars (PP_*, COMFY_*, FACE_*) still
+# override config.yaml if you want to change something for one run.
 set -euo pipefail
 cd "$(dirname "$0")"
 

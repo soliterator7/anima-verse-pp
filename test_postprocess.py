@@ -64,14 +64,17 @@ def postprocess(url, target, refs, out, meta):
             status = r.status
             data = r.read()
             notes = r.headers.get("X-PP-Notes", "")
+            method = r.headers.get("X-PP-Method", "?")
             swapped = r.headers.get("X-PP-Swapped-Faces", "?")
             enhanced = r.headers.get("X-PP-Enhanced", "?")
             if status == 204 or not data:
                 print("204 No change (nothing applicable).")
+                if notes:
+                    print(f"notes: {notes}")
                 return 3
             with open(out, "wb") as f:
                 f.write(data)
-            print(f"OK -> {out}  (swapped={swapped}, enhanced={enhanced})")
+            print(f"OK -> {out}  (method={method}, swapped={swapped}, enhanced={enhanced})")
             if notes:
                 print(f"notes: {notes}")
             return 0
@@ -87,8 +90,10 @@ def main():
     ap.add_argument("-o", "--out", default="pp_out.png")
     ap.add_argument("--url", default=DEFAULT_URL)
     ap.add_argument("--health", action="store_true")
-    ap.add_argument("--no-enhance", action="store_true", help="disable enhance for this request")
-    ap.add_argument("--no-swap", action="store_true", help="disable swap for this request")
+    ap.add_argument("--method", choices=["internal", "comfyui", "multiswap"],
+                    help="force a post-processing method for this request")
+    ap.add_argument("--no-enhance", action="store_true", help="disable enhance (internal only)")
+    ap.add_argument("--no-swap", action="store_true", help="disable swap (internal only)")
     args = ap.parse_args()
 
     if args.health:
@@ -98,6 +103,8 @@ def main():
         ap.error("need TARGET and at least one REF (or use --health)")
 
     options = {}
+    if args.method:
+        options["method"] = args.method
     if args.no_enhance:
         options["enhance"] = False
     if args.no_swap:

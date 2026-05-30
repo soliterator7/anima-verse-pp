@@ -89,7 +89,35 @@ def _run(base_url: str, workflow: dict, target_bytes: bytes, ref_bytes: List[byt
                 comfy_client.set_widget_input(workflow, title, key, value)
 
         logger.info("comfy run: %d ref slot(s), %d filled", len(ref_titles), n_filled)
-        return client.run(workflow)
+        result = client.run(workflow)
+
+    if result is None:
+        return None
+    return _match_source_size(target_bytes, result)
+
+
+def _match_source_size(source_bytes: bytes, result_bytes: bytes) -> bytes:
+    """Resize the result back to the source image's dimensions if they differ.
+
+    flux2 multiswap can emit a fixed resolution (e.g. 1024x1024) regardless of
+    the input size; keep PP output the same size as what was handed in.
+    """
+    import io
+    from PIL import Image
+
+    try:
+        src = Image.open(io.BytesIO(source_bytes))
+        res = Image.open(io.BytesIO(result_bytes)).convert("RGB")
+        if res.size == src.size:
+            return result_bytes
+        res = res.resize(src.size, Image.LANCZOS)
+        buf = io.BytesIO()
+        res.save(buf, format="PNG")
+        logger.info("resized comfy result %s -> %s", res.size, src.size)
+        return buf.getvalue()
+    except Exception:
+        logger.exception("resize-to-source failed; returning raw result")
+        return result_bytes
 
 
 def faceswap(target_bytes: bytes, ref_bytes: List[bytes], base_url: Optional[str] = None,
@@ -138,3 +166,11 @@ def is_ready(method: str) -> bool:
     if method == "multiswap":
         return config.method_enabled("multiswap") and bool(config.COMFY_MULTISWAP_URL)
     return False
+
+
+def reachable(method: str, timeout: float = 4.0) -> Optional[bool]:
+    """Ping the method's ComfyUI server. None if no URL set, else True/False."""
+    url = config.comfy_url(method)
+    if not url:
+        return None
+    return comfy_client.ComfyClient(url, timeout=config.COMFY_TIMEOUT).health(timeout=timeout)

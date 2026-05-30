@@ -6,3 +6,5 @@ models/
 *.onnx
 *.bak
 .env
+tmp/
+config.yaml
