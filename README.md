@@ -12,6 +12,15 @@ result.
 This separation exists so the main project carries no face-swap-specific code,
 models, or configuration.
 
+> **⚠ FaceSwap — legal responsibility.** This service includes a face-swap
+> capability (InsightFace inswapper/reswapper, or a ComfyUI ReActor/MultiSwap
+> workflow). It can paste a real person's face onto a generated image. **In many
+> jurisdictions (incl. Germany / EU) doing this with someone's face without their
+> explicit consent violates personality / image rights and may be a criminal
+> offence.** Use face swapping only with images of yourself, fictional
+> characters, or with the documented consent of the depicted person. The author
+> is not responsible for misuse.
+
 ## Contract
 
 ```

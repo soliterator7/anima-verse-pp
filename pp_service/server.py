@@ -25,15 +25,15 @@ import logging
 import os
 from typing import List, Optional
 
-from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import BackgroundTasks, FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.responses import JSONResponse, Response
 
-from . import config, engine_comfy, engine_enhance, engine_swap, pipeline
+from . import config, engine_comfy, engine_enhance, engine_swap, handoff, pipeline
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("pp_service")
 
-app = FastAPI(title="anima-versa-pp")
+app = FastAPI(title="anima-verse-pp")
 
 
 def startup_scan(ping: bool = True) -> None:
@@ -41,7 +41,7 @@ def startup_scan(ping: bool = True) -> None:
     are READY, pinging each configured ComfyUI url. Called from main()."""
     p = print
     p("=" * 64)
-    p("anima-versa-pp  starting up")
+    p("anima-verse-pp  starting up")
     p("=" * 64)
 
     # config file
@@ -192,6 +192,32 @@ async def enhance(image: UploadFile = File(...)):
     if out is None:
         raise HTTPException(status_code=422, detail="Enhancement unavailable or failed")
     return Response(content=out, media_type="image/png")
+
+
+@app.get("/trigger")
+async def trigger(path: str, category: str = "", background: BackgroundTasks = None):
+    """anima-verse hand-off notification (pull model).
+
+    anima-verse calls this after saving an eligible image, passing only an
+    identifier (world-relative path) — no image bytes. We acknowledge
+    immediately (202) and do the actual pull+process+write-back in the
+    background so anima-verse never blocks.
+    """
+    if not path:
+        raise HTTPException(status_code=400, detail="path required")
+    if background is not None:
+        background.add_task(_run_handoff, path, category)
+    else:  # pragma: no cover — BackgroundTasks is always injected by FastAPI
+        _run_handoff(path, category)
+    return JSONResponse(status_code=202, content={"status": "accepted", "path": path, "category": category})
+
+
+def _run_handoff(path: str, category: str) -> None:
+    try:
+        result = handoff.process(path, category)
+        logger.info("handoff result: %s", result)
+    except Exception:
+        logger.exception("handoff failed for %s", path)
 
 
 def main():

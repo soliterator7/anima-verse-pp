@@ -191,3 +191,15 @@ COMFY_TIMEOUT = _int("COMFY_TIMEOUT", _comfy.get("timeout"), 300)
 
 def comfy_url(method: str) -> str:
     return COMFY_FACESWAP_URL if method == "comfyui" else (COMFY_MULTISWAP_URL if method == "multiswap" else "")
+
+
+# --- anima-verse hand-off (pull model) -------------------------------------
+_animaverse = _sec("anima_verse")
+ANIMAVERSE_BASE_URL = _str("ANIMAVERSE_BASE_URL", _animaverse.get("base_url"), "http://127.0.0.1:8000").rstrip("/")
+ANIMAVERSE_API_KEY = _str("ANIMAVERSE_API_KEY", _animaverse.get("api_key"), "")
+ANIMAVERSE_STORAGE_DIR = _str("ANIMAVERSE_STORAGE_DIR", _animaverse.get("storage_dir"), "")
+
+
+def animaverse_mode() -> str:
+    """'local' if a storage dir is configured (filesystem read), else 'url'."""
+    return "local" if ANIMAVERSE_STORAGE_DIR else "url"

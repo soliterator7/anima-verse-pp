@@ -1,4 +1,4 @@
-# anima-versa-pp configuration — TEMPLATE
+# anima-verse-pp configuration — TEMPLATE
 # Copy this file to config.yaml and edit it, then start with:  ./run.sh
 #   cp config.example.yaml config.yaml
 # config.yaml is gitignored (it holds your local URLs); this template is committed.
@@ -48,3 +48,16 @@ enhance:
 comfy:
   timeout: 300             # seconds to wait for a ComfyUI job
   free_memory_before_run: true
+
+# ---- anima-verse hand-off (pull model) ---------------------------------------
+# anima-verse triggers GET /trigger?path=<world-relative>&category=<cat> after it
+# saves an eligible image. This service then pulls the image + reference faces,
+# processes them, and writes the result back to anima-verse.
+anima_verse:
+  base_url: "http://127.0.0.1:8000"   # anima-verse server (for writing the result back)
+  api_key: ""                          # X-API-Key for POST /api/images (must match anima-verse server.api_key)
+  # Filesystem mode (same machine): path to anima-verse's active world storage dir,
+  # e.g. /home/dev/projekte/anima-verse/worlds/hotopia . If set, the service reads
+  # the scene image + reference faces directly from disk (fast, no read API needed).
+  # Leave empty to read via anima-verse HTTP endpoints (remote mode).
+  storage_dir: ""

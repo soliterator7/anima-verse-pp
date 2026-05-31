@@ -3,7 +3,7 @@
 ## 1. Install (GPU)
 
 ```bash
-cd /home/dev/projekte/anima-versa-pp
+cd /home/dev/projekte/anima-verse-pp
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt   # onnxruntime-gpu — needs matching CUDA/cuDNN
 ```

@@ -1,4 +1,4 @@
-"""anima-versa-pp — standalone image post-processing service.
+"""anima-verse-pp — standalone image post-processing service.
 
 Generic post-processing hand-off target for the anima-verse project.
 The main project sends an image plus the canonical reference faces of the
