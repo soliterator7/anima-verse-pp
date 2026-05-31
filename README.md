@@ -1,4 +1,4 @@
-# anima-versa-pp
+# anima-verse-pp
 
 Standalone **image post-processing service** for the anima-verse project.
 
