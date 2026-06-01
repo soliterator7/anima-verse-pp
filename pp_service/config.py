@@ -177,11 +177,15 @@ COMFY_FACESWAP_WORKFLOW = os.environ.get("COMFY_FACESWAP_WORKFLOW") \
     or os.path.join(WORKFLOWS_DIR, "faceswap_reactor_api.json")
 
 COMFY_MULTISWAP_URL = _str("COMFY_MULTISWAP_URL", _multiswap.get("url"), "")
-COMFY_MULTISWAP_USE_V2 = _flag("COMFY_MULTISWAP_USE_V2", _multiswap.get("use_v2"), False)
-COMFY_MULTISWAP_WORKFLOW = os.environ.get("COMFY_MULTISWAP_WORKFLOW") \
-    or os.path.join(WORKFLOWS_DIR, "multiswap_flux2_api.json")
-COMFY_MULTISWAP_WORKFLOW_V2 = os.environ.get("COMFY_MULTISWAP_WORKFLOW_V2") \
-    or os.path.join(WORKFLOWS_DIR, "multiswap_flux2_v2_api.json")
+# Model format selects the workflow: 'gguf' (LoaderGGUF / input_gguf) or
+# 'safetensors' (UNETLoader / input_safetensors). The two graphs are otherwise
+# identical (2 reference slots, shared CLIP/VAE).
+COMFY_MULTISWAP_MODEL_FORMAT = _str(
+    "COMFY_MULTISWAP_MODEL_FORMAT", _multiswap.get("model_format"), "gguf").lower()
+COMFY_MULTISWAP_WORKFLOW_GGUF = os.environ.get("COMFY_MULTISWAP_WORKFLOW_GGUF") \
+    or os.path.join(WORKFLOWS_DIR, "multiswap_flux2_gguf_api.json")
+COMFY_MULTISWAP_WORKFLOW_SAFETENSORS = os.environ.get("COMFY_MULTISWAP_WORKFLOW_SAFETENSORS") \
+    or os.path.join(WORKFLOWS_DIR, "multiswap_flux2_safetensors_api.json")
 COMFY_MULTISWAP_UNET = _str("COMFY_MULTISWAP_UNET", _multiswap.get("unet"), "")
 COMFY_MULTISWAP_CLIP = _str("COMFY_MULTISWAP_CLIP", _multiswap.get("clip"), "")
 
@@ -191,6 +195,20 @@ COMFY_TIMEOUT = _int("COMFY_TIMEOUT", _comfy.get("timeout"), 300)
 
 def comfy_url(method: str) -> str:
     return COMFY_FACESWAP_URL if method == "comfyui" else (COMFY_MULTISWAP_URL if method == "multiswap" else "")
+
+
+def multiswap_workflow(model_format: str = ""):
+    """Resolve the multiswap workflow for a model format.
+
+    Returns (workflow_path, model_node_title, model_key):
+      gguf        -> LoaderGGUF node 'input_gguf'        (key 'gguf_name')
+      safetensors -> UNETLoader node 'input_safetensors' (key 'unet_name')
+    Unknown / empty format falls back to gguf.
+    """
+    fmt = (model_format or COMFY_MULTISWAP_MODEL_FORMAT or "gguf").lower()
+    if fmt == "safetensors":
+        return COMFY_MULTISWAP_WORKFLOW_SAFETENSORS, "input_safetensors", "unet_name"
+    return COMFY_MULTISWAP_WORKFLOW_GGUF, "input_gguf", "gguf_name"
 
 
 # --- anima-verse hand-off (pull model) -------------------------------------

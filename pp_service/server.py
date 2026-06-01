@@ -67,8 +67,9 @@ def startup_scan(ping: bool = True) -> None:
         return "OK" if path and os.path.exists(path) else "MISSING"
     p(f"[workflows] dir: {config.WORKFLOWS_DIR}")
     p(f"[workflows] faceswap (reactor): {_w(config.COMFY_FACESWAP_WORKFLOW)}")
-    p(f"[workflows] multiswap v1      : {_w(config.COMFY_MULTISWAP_WORKFLOW)}")
-    p(f"[workflows] multiswap v2      : {_w(config.COMFY_MULTISWAP_WORKFLOW_V2)}")
+    p(f"[workflows] multiswap gguf       : {_w(config.COMFY_MULTISWAP_WORKFLOW_GGUF)}")
+    p(f"[workflows] multiswap safetensors: {_w(config.COMFY_MULTISWAP_WORKFLOW_SAFETENSORS)}")
+    p(f"[workflows] multiswap format     : {config.COMFY_MULTISWAP_MODEL_FORMAT}")
 
     # methods
     p(f"[default] method: {config.DEFAULT_METHOD}   fallback: {config.FALLBACK_CHAIN}")

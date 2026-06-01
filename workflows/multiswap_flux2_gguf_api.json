@@ -26,11 +26,11 @@
         0
       ],
       "sigmas": [
-        "313",
-        0
+        "348",
+        1
       ],
       "latent_image": [
-        "304",
+        "347",
         0
       ]
     },
@@ -41,14 +41,8 @@
   },
   "304": {
     "inputs": {
-      "width": [
-        "325",
-        0
-      ],
-      "height": [
-        "325",
-        1
-      ],
+      "width": 1024,
+      "height": 1024,
       "batch_size": 1
     },
     "class_type": "EmptyFlux2LatentImage",
@@ -70,7 +64,7 @@
   },
   "306": {
     "inputs": {
-      "text": "Identity transfer task. Replace only the facial identity and hairstyle of each person in the target image using the reference images. All other properties of the target image must remain pixel-faithful to the original: head size, head position within the frame, body proportions, pose, head tilt, camera angle, lighting direction, and the original mouth state, eye state, and gaze of each person. Do not invent new facial dynamics. The output is the target image with only identity changed.",
+      "text": "Identity transfer. Replace the facial identity and hairstyle of each person to match the reference images. Preserve the existing mouth state, eye state, gaze direction, and head shape from the underlying image. Do not change the facial expression. Output: same image with only identity and hair changed.",
       "clip": [
         "335",
         0
@@ -98,15 +92,15 @@
     "inputs": {
       "cfg": 1,
       "model": [
-        "334",
+        "356",
         0
       ],
       "positive": [
-        "337:121",
+        "337:354",
         0
       ],
       "negative": [
-        "337:119",
+        "337:352",
         0
       ]
     },
@@ -142,7 +136,7 @@
   },
   "312": {
     "inputs": {
-      "sampler_name": "dpmpp_2m"
+      "sampler_name": "ddpm"
     },
     "class_type": "KSamplerSelect",
     "_meta": {
@@ -168,7 +162,7 @@
   },
   "320": {
     "inputs": {
-      "image": "Diego_1772140790_c3aeaaaf_1.png",
+      "image": "Luna_1773789501_a097b71f_1.png",
       "resize": true,
       "width": [
         "325",
@@ -201,7 +195,7 @@
     },
     "class_type": "ImageScaleToTotalPixels",
     "_meta": {
-      "title": "ImageScaleToTotalPixels"
+      "title": "Scale Image to Total Pixels"
     }
   },
   "322": {
@@ -216,7 +210,7 @@
     },
     "class_type": "ImageScaleToTotalPixels",
     "_meta": {
-      "title": "ImageScaleToTotalPixels"
+      "title": "Scale Image to Total Pixels"
     }
   },
   "325": {
@@ -233,7 +227,7 @@
   },
   "326": {
     "inputs": {
-      "image": "Diego_1775477640_0a215f54_1.png"
+      "image": "Bianca Voss_1777321842_429aa5c9_1_v819986_vbda38c.png"
     },
     "class_type": "LoadImage",
     "_meta": {
@@ -249,7 +243,7 @@
     },
     "class_type": "EmptyImage",
     "_meta": {
-      "title": "EmptyImage"
+      "title": "Empty Image"
     }
   },
   "332": {
@@ -271,20 +265,11 @@
   },
   "333": {
     "inputs": {
-      "value": -926297153143217
+      "value": -563506483398957
     },
     "class_type": "PrimitiveInt",
     "_meta": {
       "title": "input_seed"
-    }
-  },
-  "334": {
-    "inputs": {
-      "gguf_name": "Flux.2-9B-Q8.gguf"
-    },
-    "class_type": "LoaderGGUF",
-    "_meta": {
-      "title": "input_model"
     }
   },
   "335": {
@@ -300,7 +285,7 @@
   },
   "336": {
     "inputs": {
-      "image": "Kira_1771187718.png",
+      "image": "Luna_1773789501_a097b71f_1.png",
       "resize": true,
       "width": [
         "325",
@@ -333,12 +318,12 @@
     },
     "class_type": "ImageScaleToTotalPixels",
     "_meta": {
-      "title": "ImageScaleToTotalPixels"
+      "title": "Scale Image to Total Pixels"
     }
   },
   "339": {
     "inputs": {
-      "boolean": true,
+      "boolean": false,
       "on_true": [
         "336",
         0
@@ -351,6 +336,116 @@
     "class_type": "Switch any [Crystools]",
     "_meta": {
       "title": "input_reference_image_2_use"
+    }
+  },
+  "342": {
+    "inputs": {
+      "pixels": [
+        "326",
+        0
+      ],
+      "vae": [
+        "311",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "encode_target"
+    }
+  },
+  "343": {
+    "inputs": {
+      "model_name": "bbox/face_yolov8m.pt"
+    },
+    "class_type": "UltralyticsDetectorProvider",
+    "_meta": {
+      "title": "face_detector"
+    }
+  },
+  "344": {
+    "inputs": {
+      "threshold": 0.5,
+      "dilation": 10,
+      "crop_factor": 3,
+      "drop_size": 10,
+      "labels": "all",
+      "bbox_detector": [
+        "343",
+        0
+      ],
+      "image": [
+        "326",
+        0
+      ]
+    },
+    "class_type": "BboxDetectorSEGS",
+    "_meta": {
+      "title": "detect_faces"
+    }
+  },
+  "345": {
+    "inputs": {
+      "segs": [
+        "344",
+        0
+      ]
+    },
+    "class_type": "SegsToCombinedMask",
+    "_meta": {
+      "title": "segs_to_mask"
+    }
+  },
+  "346": {
+    "inputs": {
+      "expand": 12,
+      "tapered_corners": true,
+      "mask": [
+        "345",
+        0
+      ]
+    },
+    "class_type": "GrowMask",
+    "_meta": {
+      "title": "grow_mask"
+    }
+  },
+  "347": {
+    "inputs": {
+      "samples": [
+        "342",
+        0
+      ],
+      "mask": [
+        "346",
+        0
+      ]
+    },
+    "class_type": "SetLatentNoiseMask",
+    "_meta": {
+      "title": "apply_face_mask"
+    }
+  },
+  "348": {
+    "inputs": {
+      "denoise": 0.65,
+      "sigmas": [
+        "313",
+        0
+      ]
+    },
+    "class_type": "SplitSigmasDenoise",
+    "_meta": {
+      "title": "partial_denoise"
+    }
+  },
+  "356": {
+    "inputs": {
+      "gguf_name": "Flux.2-9B-Q2_K.gguf"
+    },
+    "class_type": "LoaderGGUF",
+    "_meta": {
+      "title": "input_gguf"
     }
   },
   "319:119": {
@@ -401,14 +496,14 @@
       "title": "ReferenceLatent"
     }
   },
-  "323:119": {
+  "323:349": {
     "inputs": {
       "conditioning": [
         "319:119",
         0
       ],
       "latent": [
-        "323:120",
+        "323:350",
         0
       ]
     },
@@ -417,7 +512,7 @@
       "title": "ReferenceLatent"
     }
   },
-  "323:120": {
+  "323:350": {
     "inputs": {
       "pixels": [
         "322",
@@ -433,14 +528,14 @@
       "title": "VAE Encode"
     }
   },
-  "323:121": {
+  "323:351": {
     "inputs": {
       "conditioning": [
         "319:121",
         0
       ],
       "latent": [
-        "323:120",
+        "323:350",
         0
       ]
     },
@@ -449,14 +544,14 @@
       "title": "ReferenceLatent"
     }
   },
-  "337:119": {
+  "337:352": {
     "inputs": {
       "conditioning": [
-        "323:119",
+        "323:349",
         0
       ],
       "latent": [
-        "337:120",
+        "337:353",
         0
       ]
     },
@@ -465,7 +560,7 @@
       "title": "ReferenceLatent"
     }
   },
-  "337:120": {
+  "337:353": {
     "inputs": {
       "pixels": [
         "338",
@@ -481,14 +576,14 @@
       "title": "VAE Encode"
     }
   },
-  "337:121": {
+  "337:354": {
     "inputs": {
       "conditioning": [
-        "323:121",
+        "323:351",
         0
       ],
       "latent": [
-        "337:120",
+        "337:353",
         0
       ]
     },

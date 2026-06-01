@@ -8,10 +8,11 @@ installed.
 
 faceswap : single identity -> faceswap_reactor_api.json
            input_target_image + input_reference_image_1, ReActorFaceSwap gender.
-multiswap: up to N identities -> multiswap_flux2_api.json / _v2
-           input_target_image + input_reference_image_1..N, each gated by an
-           input_reference_image_N_use Crystools switch (boolean only), optional
-           input_model / input_clip overrides.
+multiswap: up to N identities -> multiswap_flux2_{gguf,safetensors}_api.json
+           (selected by model_format). input_target_image +
+           input_reference_image_1..N, each gated by an input_reference_image_N_use
+           Crystools switch (boolean only), optional UNet override
+           (input_gguf / input_safetensors) + input_clip override.
 """
 import copy
 import json
@@ -130,15 +131,14 @@ def faceswap(target_bytes: bytes, ref_bytes: List[bytes], base_url: Optional[str
 
 
 def multiswap(target_bytes: bytes, ref_bytes: List[bytes], base_url: Optional[str] = None,
-              use_v2: Optional[bool] = None) -> Optional[bytes]:
+              model_format: Optional[str] = None) -> Optional[bytes]:
     base_url = base_url or config.COMFY_MULTISWAP_URL
     if not base_url:
         raise RuntimeError("COMFY_MULTISWAP_URL not configured")
-    use_v2 = config.COMFY_MULTISWAP_USE_V2 if use_v2 is None else use_v2
-    path = config.COMFY_MULTISWAP_WORKFLOW_V2 if use_v2 else config.COMFY_MULTISWAP_WORKFLOW
+    path, model_title, model_key = config.multiswap_workflow(model_format or "")
     workflow = _load_workflow(path)
     extra = [
-        ("input_model", "gguf_name", config.COMFY_MULTISWAP_UNET),
+        (model_title, model_key, config.COMFY_MULTISWAP_UNET),
         ("input_clip", "clip_name", config.COMFY_MULTISWAP_CLIP),
     ]
     return _run(base_url, workflow, target_bytes, ref_bytes, extra_widgets=extra)
@@ -148,8 +148,7 @@ def slot_count(method: str) -> int:
     """Number of reference slots the method's workflow exposes (0 on error)."""
     try:
         if method == "multiswap":
-            path = config.COMFY_MULTISWAP_WORKFLOW_V2 if config.COMFY_MULTISWAP_USE_V2 \
-                else config.COMFY_MULTISWAP_WORKFLOW
+            path, _, _ = config.multiswap_workflow()
         elif method == "comfyui":
             path = config.COMFY_FACESWAP_WORKFLOW
         else:

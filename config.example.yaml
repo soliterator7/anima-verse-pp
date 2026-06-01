@@ -32,10 +32,10 @@ comfyui:
 # ---- multiswap: multi-identity swap (flux2) on a ComfyUI server ---------------
 multiswap:
   enabled: true
-  url: ""          # e.g. http://127.0.0.1:8188   (empty = method not ready)
-  use_v2: false    # true = use the v2 workflow (face masking), false = v1
-  unet: ""         # optional: override the gguf/unet model name in the workflow
-  clip: ""         # optional: override the clip model name in the workflow
+  url: ""               # e.g. http://127.0.0.1:8188   (empty = method not ready)
+  model_format: gguf    # gguf | safetensors — picks the workflow + UNet loader
+  unet: ""              # optional: override the gguf/safetensors UNet model name
+  clip: ""              # optional: override the clip model name in the workflow
 
 # ---- enhancement tuning (internal method) ------------------------------------
 enhance:
